@@ -1,0 +1,9 @@
+{
+  "dependencies": [
+    "."
+  ],
+  "graphs": {
+    "avito_graph": "./graph/graph.py:graph"
+  },
+  "env": ".env"
+}
