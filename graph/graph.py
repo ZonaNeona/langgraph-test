@@ -1,4 +1,7 @@
 from langgraph.graph import StateGraph, END
+import sqlite3                                      # ← добавил
+from langgraph.checkpoint.sqlite import SqliteSaver # ← оставляем
+
 from graph.state import AdState
 from graph.nodes import (
     generate_initial_ad,
@@ -8,6 +11,10 @@ from graph.nodes import (
     human_review,
     save_ad
 )
+
+# Правильный способ создания чекпоинтера
+conn = sqlite3.connect("checkpoints.db", check_same_thread=False)
+checkpointer = SqliteSaver(conn)
 
 builder = StateGraph(AdState)
 
@@ -39,4 +46,7 @@ def human_router(state: AdState):
 builder.add_conditional_edges("human_review", human_router)
 builder.add_edge("save_ad", END)
 
-graph = builder.compile()
+# Компилируем с чекпоинтером
+graph = builder.compile(checkpointer=checkpointer)
+
+print("✅ Checkpointer подключён (checkpoints.db)")

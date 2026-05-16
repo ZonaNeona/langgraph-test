@@ -3,15 +3,18 @@ load_dotenv()
 
 from graph.graph import graph
 
-print("🚀 Avito Neon Ad Generator")
+print("🚀 Avito Neon Ad Generator (с памятью!)")
 print("Пиши промпт, например:")
 print("   Создай объявление для бара")
 print("   Неоновая вывеска для кофейни")
 print("   Сделай вывеску в квартиру\n")
 print("Напиши 'exit' чтобы выйти\n")
 
+# Каждый запуск будет использовать свой thread_id (можно потом делать разные сессии)
+thread_id = "session_1"   # можешь менять вручную, чтобы тестировать память
+
 while True:
-    user_prompt = input("Твой запрос: ").strip()
+    user_prompt = input("\nТвой запрос: ").strip()
     if user_prompt.lower() == "exit":
         break
     if not user_prompt:
@@ -32,7 +35,9 @@ while True:
         "saved": False
     }
 
-    print("\nГенерируем объявление...")
-    result = graph.invoke(initial_state)
+    config = {"configurable": {"thread_id": thread_id}}
 
-    print("\n🎉 ГОТОВО!")
+    print("\nГенерируем объявление...")
+    result = graph.invoke(initial_state, config=config)
+
+    print("\n🎉 ГОТОВО! (состояние сохранено в checkpoints.db)")

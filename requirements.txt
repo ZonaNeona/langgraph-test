@@ -1,1 +1,3 @@
 python-dotenv\n
+langgraph-checkpoint-sqlite
+supabase

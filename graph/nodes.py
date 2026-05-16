@@ -3,6 +3,7 @@ import json
 from datetime import datetime
 from langchain_openai import ChatOpenAI
 from graph.state import AdState
+from graph.tools import search_knowledge_base   # ← новый импорт
 
 llm = ChatOpenAI(
     model="openai/gpt-4o-mini",
@@ -12,36 +13,42 @@ llm = ChatOpenAI(
 
 # НОВЫЙ ПЕРВЫЙ УЗЕЛ — из промпта рождаем черновик
 def generate_initial_ad(state: AdState):
-    prompt = f"""Создай продающее объявление Авито по запросу пользователя.
+    # Сначала LLM вызывает Tool и получает знания из Supabase
+    knowledge = search_knowledge_base.invoke(state["user_prompt"])
+
+    prompt = f"""Ты — лучший копирайтер Авито по неоновым вывескам.
 
 Пользовательский запрос: {state["user_prompt"]}
 
-Сделай:
-1. Заголовок (20–50 символов, обязательно слово "неон" или "неоновая")
-2. Описание (100–250 символов, естественный тон, упомяни "неон")
+Вот релевантные инсайты и гипотезы из нашей базы знаний:
+{knowledge}
 
-Ответь **строго** в формате JSON:
+Используй эти инсайты, чтобы сделать **реально продающее** объявление:
+- Заголовок: 25–45 символов, обязательно "неон" / "неоновая"
+- Описание: 120–220 символов, естественный язык, по делу
+
+Ответь **только** JSON:
 {{
   "title": "тут заголовок",
   "description": "тут описание"
-}}
-
-Никакого другого текста!"""
+}}"""
 
     result = llm.invoke(prompt)
-    # Парсим JSON из ответа LLM
+    
     try:
         data = json.loads(result.content.strip())
+        title = data["title"].strip()
+        desc = data["description"].strip()
+        
         return {
-            "initial_title": data["title"],
-            "initial_description": data["description"],
-            "improved_title": data["title"],      # сразу копируем в improved
-            "improved_description": data["description"],
-            "title_history": [data["title"]],
-            "description_history": [data["description"]]
+            "initial_title": title,
+            "initial_description": desc,
+            "improved_title": title,
+            "improved_description": desc,
+            "title_history": [title],
+            "description_history": [desc]
         }
     except:
-        # если LLM чуть криво ответила — fallback
         return {
             "initial_title": "Неоновая вывеска",
             "initial_description": "Красивая неоновая вывеска",
